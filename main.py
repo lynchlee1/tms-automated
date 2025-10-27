@@ -115,33 +115,82 @@ def scrape_once(config):
         
         # Parse the tab-separated clipboard data into a DataFrame
         if clipboard_data:
+            print(f"Clipboard contains {len(clipboard_data)} characters")
             lines = clipboard_data.strip().split('\n')
-            data_rows = [line.split('\t') for line in lines if line.strip()]
+            print(f"Found {len(lines)} lines in clipboard data")
+            
+            # Clean and split rows
+            data_rows = []
+            for line in lines:
+                if line.strip():  # Skip empty lines
+                    row = line.split('\t')
+                    # Keep row even if it has mixed content
+                    data_rows.append(row)
+            
+            print(f"After parsing: {len(data_rows)} rows with data")
+            
             if data_rows:
-                # Find where data starts (skip empty header rows if any)
-                # Look for first row with multiple columns (likely headers)
+                # Find the header row (usually the first row with reasonable number of columns)
                 start_idx = 0
+                max_cols = 0
+                
                 for i, row in enumerate(data_rows):
-                    if len(row) > 3:  # Assuming headers have more than 3 columns
+                    # Count non-empty cells
+                    non_empty = sum(1 for cell in row if cell.strip())
+                    if non_empty > max_cols:
+                        max_cols = non_empty
                         start_idx = i
-                        break
+                        if max_cols > 3:  # Found a good header row
+                            break
                 
-                headers2 = data_rows[start_idx]
+                print(f"Using row {start_idx} as headers with {max_cols} columns")
+                
+                # Get headers from the start_idx
+                headers_raw = data_rows[start_idx]
                 data2 = data_rows[start_idx + 1:]  # Rest is data
-                print(f"Extracted {len(data2)} rows of asset data from clipboard")
                 
-                # Clean up headers (remove empty strings)
-                headers2 = [h.strip() for h in headers2 if h.strip()]
+                # Clean up headers - keep all, but trim whitespace
+                headers2 = [h.strip() for h in headers_raw]
+                
+                # Remove trailing empty headers
+                while headers2 and not headers2[-1]:
+                    headers2.pop()
+                
+                print(f"Extracted {len(data2)} rows of asset data from clipboard")
+                print(f"Headers: {headers2}")
+                
+                if not headers2:
+                    raise Exception("No valid headers found")
+                
+                if not data2:
+                    raise Exception("No data rows found")
+                
+                # Find max columns needed
+                max_data_cols = max(len(row) for row in data2) if data2 else 0
+                num_cols = max(len(headers2), max_data_cols)
+                
+                # Ensure all rows have the same number of columns
+                normalized_data = []
+                for row in data2:
+                    # Pad row to num_cols with empty strings
+                    normalized_row = row[:num_cols] + [''] * (num_cols - len(row))
+                    normalized_data.append(normalized_row)
+                
+                # Pad headers if needed
+                if len(headers2) < num_cols:
+                    headers2.extend([f'Column_{i+1}' for i in range(len(headers2), num_cols)])
                 
                 # Create DataFrame
-                df2 = pd.DataFrame(data2, columns=headers2[:len(headers2)]) if data2 else pd.DataFrame()
+                df2 = pd.DataFrame(normalized_data, columns=headers2)
+                print(f"Successfully created DataFrame with {len(df2)} rows and {len(df2.columns)} columns")
             else:
                 print("No data found in clipboard, falling back to regular scraping")
                 raise Exception("No clipboard data")
         else:
             raise Exception("Clipboard is empty")
     except Exception as e:
-        print(f"Clipboard method failed: {e}. Falling back to regular scraping...")
+        print(f"Clipboard method failed with error: {e}")
+        print("Falling back to regular scraping method...")
         # Fallback to original method
         thead2 = asset_table_elem.find_element(By.TAG_NAME, "thead")
         header_rows2 = thead2.find_elements(By.TAG_NAME, "tr")
