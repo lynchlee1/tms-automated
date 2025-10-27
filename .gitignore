@@ -1,0 +1,5 @@
+config.py
+*.xlsx
+*.xlsm
+*.pyc
+.DS_Store
