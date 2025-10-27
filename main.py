@@ -118,11 +118,23 @@ def scrape_once(config):
             lines = clipboard_data.strip().split('\n')
             data_rows = [line.split('\t') for line in lines if line.strip()]
             if data_rows:
-                # First row is usually headers
-                headers2 = data_rows[0]
-                data2 = data_rows[1:]  # Rest is data
+                # Find where data starts (skip empty header rows if any)
+                # Look for first row with multiple columns (likely headers)
+                start_idx = 0
+                for i, row in enumerate(data_rows):
+                    if len(row) > 3:  # Assuming headers have more than 3 columns
+                        start_idx = i
+                        break
+                
+                headers2 = data_rows[start_idx]
+                data2 = data_rows[start_idx + 1:]  # Rest is data
                 print(f"Extracted {len(data2)} rows of asset data from clipboard")
-                df2 = pd.DataFrame(data2, columns=headers2)
+                
+                # Clean up headers (remove empty strings)
+                headers2 = [h.strip() for h in headers2 if h.strip()]
+                
+                # Create DataFrame
+                df2 = pd.DataFrame(data2, columns=headers2[:len(headers2)]) if data2 else pd.DataFrame()
             else:
                 print("No data found in clipboard, falling back to regular scraping")
                 raise Exception("No clipboard data")
