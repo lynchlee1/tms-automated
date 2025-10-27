@@ -21,8 +21,7 @@ def scrape_once(config):
     scraper.click_button("#root > div > div > div > div.login-right > div > form > button")
     time.sleep(get("buffer_time"))
 
-    # Find button by its text instead of fragile CSS selector
-    scraper.click_button_by_text("AI")  # Replace "AI" with the actual button text
+    scraper.click_button_by_text("AI")
     time.sleep(get("buffer_time"))
     
     scraper.click_button_by_text("오퍼레이션")
