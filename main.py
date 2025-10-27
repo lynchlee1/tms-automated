@@ -76,6 +76,7 @@ def scrape_once(config):
     
     asset_selector = "#root > div > div > div.flex-1.flex.flex-col.min-w-0.relative > main > div > div > div > div.container.mx-auto.p-4.space-y-4 > div:nth-child(5) > button:nth-child(3)"
     scraper.click_button(asset_selector)
+    time.sleep(6)
     
     # Wait for asset table to appear after clicking asset_selector
     print("Waiting for asset table to appear...")
@@ -107,7 +108,7 @@ def scrape_once(config):
         time.sleep(1)
         
         # Step 4: Copy to clipboard using Ctrl+C
-        cell0_d.send_keys(Keys.chord(Keys.CONTROL, 'c'))
+        cell0_d.send_keys(Keys.CONTROL, 'c')
         time.sleep(2)
         
         # Step 5: Read clipboard data
