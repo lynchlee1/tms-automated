@@ -88,11 +88,11 @@ def scrape_once(config):
     # New approach: Click cell #cell0_d, right-click, select "Select All", Ctrl+C to copy all data
     print("Attempting to copy all table data via clipboard...")
     try:
-        # Step 1: Click on cell #cell0_d
+        # Step 1: Click on cell #cell0_d using JavaScript
         cell0_d = WebDriverWait(scraper.driver, get("short_loadtime")).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "#cell0_d"))
         )
-        cell0_d.click()
+        scraper.driver.execute_script("arguments[0].click();", cell0_d)
         time.sleep(1)
         
         # Step 2: Right-click to open context menu
@@ -107,7 +107,9 @@ def scrape_once(config):
         select_all_button.click()
         time.sleep(1)
         
-        # Step 4: Copy to clipboard using Ctrl+C
+        # Step 4: Copy to clipboard using Ctrl+C - use JavaScript to ensure element has focus
+        scraper.driver.execute_script("arguments[0].focus();", cell0_d)
+        time.sleep(0.5)
         cell0_d.send_keys(Keys.CONTROL, 'c')
         time.sleep(2)
         
