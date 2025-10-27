@@ -1,0 +1,21 @@
+{
+  "urls": {
+    "details_url": "https://tms.timefolio.net"
+  },
+  "selectors": {
+    "search_button_selector": "#bd_input2_image1",
+    "company_input_selector": "#search_string",
+    "company_search_selector": "#image2",
+    "popup_selector": "#visDiv",
+    "popup_iframe": "#iframeIsin",
+    "from_date_selector": "#inputCalendar1_input",
+    "to_date_selector": "#inputCalendar2_input"
+  },
+  "timing": {
+    "buffer_time": 1.5,
+    "long_loadtime": 5,
+    "short_loadtime": 3,
+    "waitcount": 7,
+    "timeout": 1
+  }
+}
