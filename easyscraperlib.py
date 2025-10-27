@@ -59,8 +59,7 @@ def update_section(section_name, data): return _settings.update_section(section_
 def get_resource_path(relative_path): return _settings._get_resource_path(relative_path)
 
 class EasyScraper:
-    def __init__(self, config, headless = False, process_type = None):
-        self.config = config # from_date, to_date, company, key
+    def __init__(self, headless = False):
         self.headless = headless
         self.driver = None
         self.wait = None
@@ -89,44 +88,43 @@ class EasyScraper:
                 except: pass
             raise Exception(f"❌ CSS {selector} 클릭 실패: {e}")
 
-    def click_button_by_text(self, button_text, exact_match=True, in_iframe=False, element_type="auto"):
+    def click_button_by_text(self, button_text, in_iframe=False, max_attempts=10):
         """
         Find and click an element by its text content (searches all nested elements).
-        Can search for buttons, links, or any clickable element.
         
-        Args:
-            button_text: The text to search for on the element
-            exact_match: If True, matches exact text. If False, matches partial text.
-            in_iframe: Whether the element is inside an iframe
+        button_text: The text to search for on the element
+        in_iframe: Whether the element is inside an iframe
+        max_attempts: Maximum number of retry attempts (default: 10)
         """
-        try:
-            if in_iframe:
-                iframe_selector = get("popup_iframe")
-                iframe = self.driver.find_element(By.CSS_SELECTOR, iframe_selector)
-                self.driver.switch_to.frame(iframe)
-            
-            xpath_patterns = [
-                f"//button[normalize-space(string())='{button_text}']",
-                f"//a[normalize-space(string())='{button_text}']",
-            ]
-            for partial_xpath in xpath_patterns:
-                try:
-                    element = self.driver.find_element(By.XPATH, partial_xpath)
-                    self.driver.execute_script("arguments[0].click();", element)
-                    print(f"✅ {button_text} 클릭 완료")
-                    if in_iframe:
-                        self.driver.switch_to.default_content()
-                        print(f"🔄 Switched back to main frame")
-                    time.sleep(get("buffer_time"))
-                    return
-                except: continue
-            raise Exception(f"{button_text} 클릭 실패")
+        attempt = 0
+        while attempt < max_attempts:
+            try:
+                if in_iframe:
+                    iframe_selector = get("popup_iframe")
+                    iframe = self.driver.find_element(By.CSS_SELECTOR, iframe_selector)
+                    self.driver.switch_to.frame(iframe)
                 
-        except Exception as e: 
-            if in_iframe:
-                try: self.driver.switch_to.default_content()
-                except: pass
-            raise Exception(f"❌ 요소 텍스트 '{button_text}' 클릭 실패: {e}")
+                xpath_patterns = [
+                    f"//button[normalize-space(string())='{button_text}']",
+                    f"//a[normalize-space(string())='{button_text}']",
+                ]
+                for partial_xpath in xpath_patterns:
+                    try:
+                        element = self.driver.find_element(By.XPATH, partial_xpath)
+                        self.driver.execute_script("arguments[0].click();", element)
+                        print(f"✅ {button_text} 클릭 완료")
+                        if in_iframe: self.driver.switch_to.default_content()
+                        return
+                    except: continue
+                raise Exception(f"{button_text} 클릭 실패")
+                    
+            except Exception as e:
+                attempt += 1
+                if in_iframe:
+                    try: self.driver.switch_to.default_content()
+                    except: pass
+                if attempt < max_attempts: time.sleep(get("buffer_time"))
+                else: raise Exception(f"{button_text} 클릭 실패: {e}")
 
     def fill_input(self, selector, value, in_iframe=False):
         if value is None: return
@@ -148,13 +146,7 @@ class EasyScraper:
             if in_iframe: # Make sure to switch back to main frame on error
                 try: self.driver.switch_to.default_content()
                 except: pass
-            raise Exception(f"❌ {selector} 입력 실패: {e}")
-    
-    def fill_dates(self):
-        try:
-            self._fill_input(get("from_date_selector"), self.config.get('from_date'))
-            self._fill_input(get("to_date_selector"), self.config.get('to_date'))
-        except Exception as e: raise Exception(f"❌ 날짜 입력 실패: {e}")
+            raise Exception(f"{selector} 입력 실패: {e}")
 
     def _setup_driver(self, headless):
         chrome_options = Options()
