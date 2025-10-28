@@ -3,3 +3,12 @@ config.py
 *.xlsm
 *.pyc
 .DS_Store
+*.toc
+*.zip
+*.pyz
+*.pkg
+*.html
+*.txt
+*.exe
+temp_excel_writer.spec
+temp_excel_writer.py

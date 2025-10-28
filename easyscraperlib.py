@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+import pyperclip
 
 import json
 import os
@@ -16,10 +17,24 @@ class Settings:
         self._system_data = self.load_system_constants()
     
     def _get_resource_path(self, relative_path):
-        try: base_path = sys._MEIPASS
-        except AttributeError: 
+        """Get the resource path, checking both exe directory and PyInstaller temp directory"""
+        # Check if running as compiled .exe
+        if getattr(sys, 'frozen', False):
+            exe_dir = os.path.dirname(sys.executable)
+            file_path = os.path.join(exe_dir, relative_path)
+            if os.path.exists(file_path):
+                return file_path
+            
+            # Fall back to PyInstaller temp directory
+            try:
+                base_path = sys._MEIPASS
+            except AttributeError:
+                base_path = exe_dir
+        else:
+            # Running as script
             current_dir = os.path.dirname(os.path.abspath(__file__))
             base_path = current_dir
+        
         return os.path.join(base_path, relative_path)
     
     def load_system_constants(self):
@@ -147,6 +162,21 @@ class EasyScraper:
                 try: self.driver.switch_to.default_content()
                 except: pass
             raise Exception(f"{selector} 입력 실패: {e}")
+    
+    @staticmethod
+    def parse_clipboard_to_rows():
+        """
+        Clipboard data (tab-separated values)        
+        -> list of lists: Data rows with each row as a list of cell values
+        """
+        clipboard_data = pyperclip.paste()
+        if not clipboard_data: return []
+        
+        lines = clipboard_data.strip().split('\n')        
+        data_rows = []
+        for line in lines:
+            if line.strip(): data_rows.append(line.split('\t'))
+        return data_rows
 
     def _setup_driver(self, headless):
         chrome_options = Options()

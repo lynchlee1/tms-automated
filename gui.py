@@ -14,7 +14,7 @@ class ScraperGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Excel Update")
-        self.root.geometry("400x350")
+        self.root.geometry("800x700")
         self.root.resizable(False, False)
         
         # Configure style for better appearance
@@ -32,23 +32,21 @@ class ScraperGUI:
                                font=("Segoe UI", 18, "bold"), style="Title.TLabel")
         title_label.grid(row=0, column=0, columnspan=2, pady=(0, 30))
         
-        # Headless mode section
-        mode_frame = ttk.LabelFrame(main_frame, text="실행 모드", padding="10")
-        mode_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=15)
-        
-        self.headless_var = tk.BooleanVar(value=False)
-        headless_check = ttk.Checkbutton(main_frame, text="Headless 모드 (백그라운드 실행)", 
-                                         variable=self.headless_var)
-        headless_check.grid(row=2, column=0, columnspan=2, pady=15)
-        
         # Buttons frame
         button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=3, column=0, columnspan=2, pady=25)
+        button_frame.grid(row=1, column=0, columnspan=2, pady=25)
         
         # Run button
         self.run_button = ttk.Button(button_frame, text="실행", command=self.run_scraper, 
                                    style="Accent.TButton", width=10)
         self.run_button.pack(side=tk.LEFT, padx=(0, 15))
+        
+        # Headless mode button
+        self.headless_var = tk.BooleanVar(value=False)
+        self.headless_button = ttk.Button(button_frame, text="Chrome 숨기기 선택됨", 
+                                          command=self.toggle_headless, 
+                                          style="TButton", width=30)
+        self.headless_button.pack(side=tk.LEFT, padx=(0, 15))
         
         # Exit button
         exit_button = ttk.Button(button_frame, text="종료", command=self.root.quit, 
@@ -57,16 +55,27 @@ class ScraperGUI:
         
         # Progress bar
         self.progress = ttk.Progressbar(main_frame, mode='indeterminate', style="TProgressbar")
-        self.progress.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=15)
+        self.progress.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=15)
         
         # Status label
         self.status_label = ttk.Label(main_frame, text="", font=("Segoe UI", 9))
-        self.status_label.grid(row=5, column=0, columnspan=2, pady=5)
+        self.status_label.grid(row=3, column=0, columnspan=2, pady=5)
         
         # Configure grid weights
         root.columnconfigure(0, weight=1)
         root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
+    
+    def toggle_headless(self):
+        """Toggle headless mode and update button appearance"""
+        current_value = self.headless_var.get()
+        self.headless_var.set(not current_value)
+        
+        # Update button appearance based on state
+        if self.headless_var.get():
+            self.headless_button.config(text="Chrome 숨기기 선택됨", style="Accent.TButton")
+        else:
+            self.headless_button.config(text="Chrome 열기 선택됨", style="TButton")
     
     def setup_styles(self):
         """Configure custom styles for better appearance"""
@@ -201,10 +210,10 @@ class ScraperGUI:
         
         if result.returncode == 0:
             print("실행 완료!")
-            messagebox.showinfo("완료", "스크래핑이 성공적으로 완료되었습니다!\nExcel 파일을 확인하세요.")
+            messagebox.showinfo("완료", "실행 완료")
         else:
             print("오류 발생")
-            messagebox.showerror("오류", f"스크래핑 중 오류가 발생했습니다:\n{result.stderr}")
+            messagebox.showerror("오류", f"오류 발생:\n{result.stderr}")
     
     def scraper_error(self, error_msg):
         """Handle scraper error"""
@@ -212,7 +221,7 @@ class ScraperGUI:
         self.run_button.config(state='normal')
         self.status_label.config(text="")
         print("오류 발생")
-        messagebox.showerror("오류", f"스크래핑 실행 실패:\n{error_msg}")
+        messagebox.showerror("오류", f"실행 실패:\n{error_msg}")
 
 def main():
     root = tk.Tk()
